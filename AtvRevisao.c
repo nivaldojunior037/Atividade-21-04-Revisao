@@ -239,11 +239,12 @@ void setup(){
     adc_gpio_init(VRX_PIN);
     adc_gpio_init(VRY_PIN);
 
+    // Determinação de variáveis usadas pela matriz de LEDs
     offset = pio_add_program(pio, &AtvRevisao_program);
     sm = pio_claim_unused_sm(pio, true);
     AtvRevisao_program_init(pio, sm, offset, LEDS_PIN);
 
-    //Inicialização e configuração da UART
+    // Inicialização e configuração da UART
     uart_init(UART_ID, 115200);
     gpio_set_function(UART_TX_PIN, GPIO_FUNC_UART); 
     gpio_set_function(UART_RX_PIN, GPIO_FUNC_UART); 
@@ -267,13 +268,15 @@ int main(){
 
     // Loop infinito
     while (true){
-
+        // Quando temp é 10, a contagem regressiva é iniciada
         if(temp==10){
             printf("\n\nContagem regressiva iniciada.\n");
         } 
 
+        // A matriz de LEDs é acionada de acordo com o valor de temp
         colorirmatriz(temp);
         uint32_t tempo_cont = to_ms_since_boot(get_absolute_time());
+        // A cada 1 segundo, o valor de temp é decrementado em 1 
         if(tempo_cont - contagem >= 1000 && temp<11){
             if(temp<=10 && temp>0){
             printf("Contagem em andamento: 00:0%d\n", temp-1);
@@ -281,17 +284,19 @@ int main(){
             temp--;
             contagem = tempo_cont;
         }
-
+        // Quando temp chega a -1, a contagem para, temp é redefinido para 11 e o alarme do buzzer é acionado
         if(temp == -1){
             tocar_buzzer(1000, 500);
             printf("Contagem finalizada.\n");
             temp = 11;
         }
-
+        // Se o valor de temp estiver entre 0 e 10, o LED verde é acionado
         if(temp<11 && temp>=0){
             gpio_put(LED_PIN_GREEN, 1);
             gpio_put(LED_PIN_RED, 0);
-        } else {
+        } 
+        // Se o valor de temp for diferente, o LED vermelho fica acionado
+        else {
             gpio_put(LED_PIN_GREEN, 0);
             gpio_put(LED_PIN_RED, 1);
         }
@@ -330,13 +335,15 @@ static void gpio_irq_handler(uint gpio, uint32_t events){
     uint32_t tempo_atual = to_us_since_boot(get_absolute_time());
     // Verificação de alteração em um intervalo maior que 200ms (debouncing)
     if(tempo_atual - ultimo_tempo > 200000){
+        // Se o botão A foi pressionado, o valor de temp é definido em 10
         if(gpio_get(BUTTON_A)==0 && gpio_get(BUTTON_B)==1){
             temp = 10;
-        } else if (gpio_get(BUTTON_A)==1 && gpio_get(BUTTON_B)==0){
+        } 
+        // Se o botão B foi pressionado, o valor de temp é definido em 11 para interromper a contagem regressiva 
+        else if (gpio_get(BUTTON_A)==1 && gpio_get(BUTTON_B)==0){
             temp=11;
             printf("Contagem interrompida.\n");
         }
-        
         ultimo_tempo = tempo_atual; 
     }
 }
